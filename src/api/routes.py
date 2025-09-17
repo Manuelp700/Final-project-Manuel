@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
-from api.models import db, User, Product, Cart, CartItem
+from src.api.models import db, User, Product, Cart, CartItem  # <- FIX
+import os
 
 api = Blueprint('api', __name__)
 CORS(api)
@@ -220,3 +221,44 @@ def remove_from_cart():
     db.session.delete(item)
     db.session.commit()
     return jsonify(cart.serialize()), 200
+
+
+@api.route('/checkout', methods=['POST'])
+@jwt_required()
+def checkout():
+    uid = get_jwt_identity()
+    cart = Cart.query.filter_by(user_id=uid).first()
+    if not cart or len(cart.items) == 0:
+        return jsonify({"msg": "Carrito vacío"}), 400
+
+    stripe_key = os.getenv("STRIPE_SECRET_KEY")
+    if not stripe_key:
+        total = sum(i.product.price *
+                    i.quantity for i in cart.items if i.product)
+        return jsonify({"msg": "Pago simulado OK", "total": total}), 200
+
+    try:
+        import stripe
+        stripe.api_key = stripe_key
+        line_items = []
+        for i in cart.items:
+            if not i.product:
+                continue
+            line_items.append({
+                "price_data": {
+                    "currency": "eur",
+                    "product_data": {"name": i.product.name},
+                    "unit_amount": int(i.product.price * 100),
+                },
+                "quantity": i.quantity
+            })
+        frontend = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        session = stripe.checkout.Session.create(
+            mode="payment",
+            line_items=line_items,
+            success_url=f"{frontend}/cart?status=success",
+            cancel_url=f"{frontend}/cart?status=cancel"
+        )
+        return jsonify({"checkout_url": session.url}), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error con pasarela: {str(e)}"}), 500
