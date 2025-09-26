@@ -3,7 +3,7 @@ import { useState } from "react"
 export const Login = () => {
     const [form, setForm] = useState({ email: "", password: "" })
     const [errors, setErrors] = useState({})
-    const backend = import.meta.env.VITE_BACKEND_URL
+    const backend = import.meta.env.DEV ? "" : import.meta.env.VITE_BACKEND_URL
 
     const validate = () => {
         const e = {}

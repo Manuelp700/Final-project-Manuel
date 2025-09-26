@@ -1,16 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Grid, Card, CardMedia, CardContent, Typography, CardActionArea, Chip, Box } from "@mui/material";
+import { Box, Card, CardMedia, CardContent, Typography, CardActionArea, Chip } from "@mui/material";
 
-const categoryColor = {
-  billie: "billie",
-  ariana: "ariana",
-  gaga: "gaga"
-};
+const categoryColor = { billie: "billie", ariana: "ariana", gaga: "gaga" };
 
 export const Products = () => {
   const [items, setItems] = useState([]);
-  const backend = import.meta.env.VITE_BACKEND_URL;
+  const backend = import.meta.env.DEV ? "" : import.meta.env.VITE_BACKEND_URL;
   const { search } = useLocation();
 
   useEffect(() => { fetch(`${backend}/api/products`).then(r => r.json()).then(setItems); }, [backend]);
@@ -19,7 +15,6 @@ export const Products = () => {
   const q = (params.get("search") || "").toLowerCase();
   const cat = params.get("cat");
 
-  // (Temporal) Simulación de categoría según nombre:
   const enhanced = useMemo(() => items.map(p => {
     const name = p.name.toLowerCase();
     let category = "gaga";
@@ -36,9 +31,20 @@ export const Products = () => {
   return (
     <Box className="container" sx={{ py: 3 }}>
       <Typography variant="h4" mb={2}>Productos</Typography>
-      <Grid container spacing={3}>
+
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(4, 1fr)"
+          }
+        }}
+      >
         {filtered.map(p =>
-          <Grid item key={p.id} xs={12} sm={6} md={3}>
+          <Box key={p.id}>
             <Card elevation={3} sx={{ height: "100%", position: "relative" }}>
               <CardActionArea component={Link} to={`/products/${p.id}`}>
                 {p.image_url && <CardMedia component="img" height="180" image={p.image_url} alt={p.name} />}
@@ -55,14 +61,15 @@ export const Products = () => {
                 sx={{ position: "absolute", top: 8, left: 8, textTransform: "capitalize", backgroundColor: theme => theme.palette[p.category]?.main }}
               />
             </Card>
-          </Grid>
+          </Box>
         )}
+
         {filtered.length === 0 && (
-          <Grid item xs={12}>
+          <Box>
             <Typography variant="body1">Sin resultados.</Typography>
-          </Grid>
+          </Box>
         )}
-      </Grid>
+      </Box>
     </Box>
   );
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
 export const Profile = () => {
-    const backend = import.meta.env.VITE_BACKEND_URL
+    const backend = import.meta.env.DEV ? "" : import.meta.env.VITE_BACKEND_URL
     const token = localStorage.getItem("token")
     const [form, setForm] = useState({ email: "", password: "" })
     const [loading, setLoading] = useState(true)
@@ -11,7 +11,7 @@ export const Profile = () => {
         fetch(`${backend}/api/profile`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => r.json())
             .then(data => { setForm({ email: data.email, password: "" }); setLoading(false) })
-    }, [token])
+    }, [token, backend])
 
     const save = async (e) => {
         e.preventDefault()

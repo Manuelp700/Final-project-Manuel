@@ -108,11 +108,8 @@ export const Navbar = () => {
             </>
           ) : (
             <>
-              <IconButton color="inherit" component={RouterLink} to="/login">
+              <IconButton color="inherit" component={RouterLink} to="/auth" aria-label="Iniciar sesión o registrarse">
                 <LoginIcon />
-              </IconButton>
-              <IconButton color="inherit" component={RouterLink} to="/register">
-                <AddCircleIcon />
               </IconButton>
             </>
           )}
