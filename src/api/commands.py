@@ -1,4 +1,7 @@
 import click
+import hashlib
+import json
+import os
 from .models import db, User, Product, Cart, CartItem
 
 """
@@ -33,55 +36,124 @@ def setup_commands(app):
     def insert_test_data():
         pass
 
+    def _img_for(name: str) -> str:
+        """Devuelve una URL de imagen para el producto.
+        Si PRODUCT_IMAGES_RANDOM está activo (1/true), usa una imagen aleatoria por tags de Unsplash Source.
+        Si no, intenta mapping local y como fallback usa una imagen fija con LoremFlickr + lock.
+        """
+        random_mode = os.getenv('PRODUCT_IMAGES_RANDOM',
+                                '1').lower() in ('1', 'true', 'yes')
+        qmap = {
+            "Billie Eilish Hoodie Black": ["hoodie", "black"],
+            "Billie Eilish Cap Neon": ["cap", "neon"],
+            "Ariana Grande T-Shirt Pink": ["tshirt", "pink"],
+            "Ariana Grande Hoodie Cream": ["hoodie", "cream"],
+            "Lady Gaga Cap Chromatica": ["cap", "neon"],
+            "Lady Gaga T-Shirt Black": ["tshirt", "black"],
+            "Billie Eilish Beanie": ["beanie", "green"],
+            "Ariana Grande Tote Bag": ["tote", "bag"],
+            "Lady Gaga Poster Limited": ["poster", "music"],
+            "Billie Eilish Socks": ["socks", "pattern"],
+            "Ariana Grande Phone Case": ["phone", "case"],
+            "Lady Gaga Hoodie Pink": ["hoodie", "pink"],
+            "Billie Eilish Necklace": ["necklace", "metal"],
+            "Ariana Grande Cap White": ["cap", "white"],
+            "Lady Gaga T-Shirt White": ["tshirt", "white"],
+            "Billie Eilish Bracelet": ["bracelet", "black"],
+            "Ariana Grande Hoodie Lilac": ["hoodie", "lilac"],
+            "Lady Gaga Cap Black": ["cap", "black"],
+            "Billie Eilish Poster Neon": ["poster", "neon"],
+            "Ariana Grande Beanie Pink": ["beanie", "pink"],
+        }
+        tags = qmap.get(name)
+        if not tags:
+            tags = ["merch", "clothes", "apparel"]
+        query = ",".join(tags)
+
+        if random_mode:
+            return f"https://source.unsplash.com/600x400/?{query}"
+
+        # Modo fijo: mapping primero
+        try:
+            base_dir = os.path.abspath(os.path.join(
+                os.path.dirname(__file__), '..', '..'))
+            mapping_path = os.path.join(
+                base_dir, 'docs', 'product_images.json')
+            if os.path.isfile(mapping_path):
+                with open(mapping_path, 'r', encoding='utf-8') as fh:
+                    mapping = json.load(fh)
+                mapped = mapping.get(name)
+                if mapped:
+                    return mapped
+        except Exception:
+            pass
+
+        lock = int(hashlib.sha1(name.encode("utf-8")).hexdigest(), 16) % 10000
+        return f"https://loremflickr.com/600/400/{query}/all?lock={lock}"
+
     @app.cli.command("insert-sample-products")
     def insert_sample_products():
         samples = [
             {"name": "Billie Eilish Hoodie Black", "description": "Sudadera oficial negra.",
-                "price": 49.99, "stock": 50, "image_url": "https://picsum.photos/seed/b1/600/400"},
+                "price": 49.99, "stock": 50},
             {"name": "Billie Eilish Cap Neon", "description": "Gorra neón edición fan.",
-                "price": 19.99, "stock": 80, "image_url": "https://picsum.photos/seed/b2/600/400"},
+                "price": 19.99, "stock": 80},
             {"name": "Ariana Grande T-Shirt Pink", "description": "Camiseta rosa tour.",
-                "price": 24.99, "stock": 100, "image_url": "https://picsum.photos/seed/a1/600/400"},
+                "price": 24.99, "stock": 100},
             {"name": "Ariana Grande Hoodie Cream", "description": "Sudadera crema.",
-                "price": 54.99, "stock": 40, "image_url": "https://picsum.photos/seed/a2/600/400"},
+                "price": 54.99, "stock": 40},
             {"name": "Lady Gaga Cap Chromatica", "description": "Gorra edición Chromatica.",
-                "price": 21.99, "stock": 60, "image_url": "https://picsum.photos/seed/g1/600/400"},
+                "price": 21.99, "stock": 60},
             {"name": "Lady Gaga T-Shirt Black", "description": "Camiseta negra logo.",
-                "price": 22.50, "stock": 90, "image_url": "https://picsum.photos/seed/g2/600/400"},
+                "price": 22.50, "stock": 90},
             {"name": "Billie Eilish Beanie", "description": "Gorro de lana verde.",
-                "price": 16.99, "stock": 70, "image_url": "https://picsum.photos/seed/b3/600/400"},
+                "price": 16.99, "stock": 70},
             {"name": "Ariana Grande Tote Bag", "description": "Bolsa de tela.", "price": 12.99,
-                "stock": 120, "image_url": "https://picsum.photos/seed/a3/600/400"},
+                "stock": 120},
             {"name": "Lady Gaga Poster Limited", "description": "Póster edición limitada.",
-                "price": 14.99, "stock": 30, "image_url": "https://picsum.photos/seed/g3/600/400"},
+                "price": 14.99, "stock": 30},
             {"name": "Billie Eilish Socks", "description": "Calcetines temáticos.",
-                "price": 9.99, "stock": 150, "image_url": "https://picsum.photos/seed/b4/600/400"},
+                "price": 9.99, "stock": 150},
             {"name": "Ariana Grande Phone Case", "description": "Funda móvil.", "price": 17.99,
-                "stock": 100, "image_url": "https://picsum.photos/seed/a4/600/400"},
+                "stock": 100},
             {"name": "Lady Gaga Hoodie Pink", "description": "Sudadera rosa vibrante.",
-                "price": 52.00, "stock": 35, "image_url": "https://picsum.photos/seed/g4/600/400"},
+                "price": 52.00, "stock": 35},
             {"name": "Billie Eilish Necklace", "description": "Collar logo.", "price": 18.50,
-                "stock": 75, "image_url": "https://picsum.photos/seed/b5/600/400"},
+                "stock": 75},
             {"name": "Ariana Grande Cap White", "description": "Gorra blanca.", "price": 19.50,
-                "stock": 85, "image_url": "https://picsum.photos/seed/a5/600/400"},
+                "stock": 85},
             {"name": "Lady Gaga T-Shirt White", "description": "Camiseta blanca.",
-                "price": 23.99, "stock": 95, "image_url": "https://picsum.photos/seed/g5/600/400"},
+                "price": 23.99, "stock": 95},
             {"name": "Billie Eilish Bracelet", "description": "Pulsera oficial.", "price": 11.99,
-                "stock": 110, "image_url": "https://picsum.photos/seed/b6/600/400"},
+                "stock": 110},
             {"name": "Ariana Grande Hoodie Lilac", "description": "Sudadera lila.",
-                "price": 55.00, "stock": 45, "image_url": "https://picsum.photos/seed/a6/600/400"},
+                "price": 55.00, "stock": 45},
             {"name": "Lady Gaga Cap Black", "description": "Gorra negra.", "price": 20.00,
-                "stock": 70, "image_url": "https://picsum.photos/seed/g6/600/400"},
+                "stock": 70},
             {"name": "Billie Eilish Poster Neon", "description": "Póster neón.", "price": 13.50,
-                "stock": 65, "image_url": "https://picsum.photos/seed/b7/600/400"},
+                "stock": 65},
             {"name": "Ariana Grande Beanie Pink", "description": "Gorro rosa.", "price": 15.50,
-                "stock": 60, "image_url": "https://picsum.photos/seed/a7/600/400"},
+                "stock": 60},
         ]
         created = 0
         for s in samples:
             if not Product.query.filter_by(name=s["name"]).first():
+                # asigna imagen acorde al nombre
+                s["image_url"] = _img_for(s["name"])
                 p = Product(**s)
                 db.session.add(p)
                 created += 1
         db.session.commit()
         print(f"Productos creados: {created}")
+
+    @app.cli.command("refresh-product-images")
+    def refresh_product_images():
+        """Actualiza la image_url de los productos existentes basándose en su nombre."""
+        updated = 0
+        for p in Product.query.all():
+            new_url = _img_for(p.name)
+            if p.image_url != new_url:
+                p.image_url = new_url
+                updated += 1
+        db.session.commit()
+        print(f"Imágenes actualizadas: {updated}")

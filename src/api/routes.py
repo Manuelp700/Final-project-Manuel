@@ -166,6 +166,10 @@ def delete_product(pid):
     p = Product.query.get(pid)
     if not p:
         return jsonify({"msg": "No existe"}), 404
+    # Evitar borrar productos referenciados en carritos para no romper FK
+    ref_count = CartItem.query.filter_by(product_id=pid).count()
+    if ref_count > 0:
+        return jsonify({"msg": "Producto referenciado en carritos. Vacía esos items antes de eliminarlo."}), 409
     db.session.delete(p)
     db.session.commit()
     return jsonify({"msg": "Producto eliminado"}), 200

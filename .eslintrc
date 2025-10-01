@@ -1,31 +1,46 @@
 {
   "parser": "@babel/eslint-parser",
-  "plugins": [
-    "react"
-  ],
+  "parserOptions": {
+    "requireConfigFile": false,
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
+  "plugins": ["react"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "env": {
     "browser": true,
     "es6": true
   },
-  "extends": [ "plugin:react/recommended"],
+  "ignorePatterns": ["dist/**"],
+  "extends": ["plugin:react/recommended"],
   "rules": {
-    "strict":0,
+    "strict": 0,
     "no-unused-vars": 0,
-    "no-console": 1,
+    "no-console": 0,
     "no-mixed-spaces-and-tabs": 0,
-    "no-debugger": 0, 
-    "semi": ["error", "always"],
-    "allowImportExportEverywhere": false,
+    "no-debugger": 0,
+    "semi": 0,
     "indent": "off",
     "react/jsx-indent": "off",
     "react/jsx-indent-props": "off",
-    "comma-dangle": [1, { //when to use the last comma
+    "comma-dangle": [
+      1,
+      {
         "arrays": "never",
         "objects": "never",
         "imports": "never",
         "exports": "never",
-        "functions": "ignore",
-    }],
-    "react/prop-types": [2]
+        "functions": "ignore"
+      }
+    ],
+    "react/prop-types": 0,
+    "react/react-in-jsx-scope": 0,
+    "react/jsx-uses-react": 0,
+    "react/no-unescaped-entities": 0,
+    "react/jsx-no-target-blank": 0
   }
 }
