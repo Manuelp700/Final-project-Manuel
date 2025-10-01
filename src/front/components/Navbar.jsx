@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Typography, IconButton, Box, InputBase, Menu, MenuItem, Button, Stack, Badge } from "@mui/material";
+import { motion, AnimatePresence } from "framer-motion";
 import { styled } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -41,6 +42,51 @@ const categories = [
   { key: "gaga", label: "Lady Gaga" }
 ];
 
+// Menú flotante animado para perfil
+function ProfileMenu({ logout }) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  return (
+    <Box sx={{ position: "relative" }}>
+      <IconButton color="inherit" onClick={() => setOpen(v => !v)}>
+        <PersonIcon />
+      </IconButton>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              top: 48,
+              right: 0,
+              zIndex: 100,
+              minWidth: 220,
+              background: "#fff",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+              borderRadius: 16,
+              padding: "18px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12
+            }}
+          >
+            <Typography variant="h6" mb={1} color="primary">Mi perfil</Typography>
+            <Button variant="outlined" color="primary" onClick={() => { setOpen(false); navigate("/profile"); }} sx={{ mb: 1 }}>
+              Editar perfil
+            </Button>
+            <Button variant="contained" color="error" onClick={() => { setOpen(false); logout(); }}>
+              Cerrar sesión
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Box>
+  );
+}
+
 export const Navbar = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -66,6 +112,19 @@ export const Navbar = () => {
     if (cat === "all") navigate("/products");
     else navigate(`/products?cat=${cat}`);
   };
+
+  // Estado para el contador del carrito
+  const [cartCount, setCartCount] = useState(0);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return setCartCount(0);
+    fetch(`${import.meta.env.DEV ? "" : import.meta.env.VITE_BACKEND_URL}/api/cart`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(cart => setCartCount(cart?.items?.length || 0))
+      .catch(() => setCartCount(0));
+  }, []);
 
   return (
     <AppBar position="sticky" color="primary">
@@ -93,19 +152,36 @@ export const Navbar = () => {
             {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>
           <IconButton color="inherit" component={RouterLink} to="/cart">
-            <Badge color="secondary" badgeContent={0}>
-              <ShoppingCartIcon />
+            <Badge
+              color="secondary"
+              badgeContent={
+                <AnimatePresence>
+                  {cartCount > 0 && (
+                    <motion.span
+                      key={cartCount}
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1.1, opacity: 1 }}
+                      exit={{ scale: 0.7, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      style={{ display: "inline-block" }}
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              }
+            >
+              <motion.div
+                whileTap={{ scale: 0.85 }}
+                whileHover={{ scale: 1.1 }}
+                style={{ display: "inline-block" }}
+              >
+                <ShoppingCartIcon />
+              </motion.div>
             </Badge>
           </IconButton>
           {token ? (
-            <>
-              <IconButton color="inherit" component={RouterLink} to="/profile">
-                <PersonIcon />
-              </IconButton>
-              <IconButton color="inherit" onClick={logout}>
-                <LogoutIcon />
-              </IconButton>
-            </>
+            <ProfileMenu logout={logout} />
           ) : (
             <>
               <IconButton color="inherit" component={RouterLink} to="/auth" aria-label="Iniciar sesión o registrarse">

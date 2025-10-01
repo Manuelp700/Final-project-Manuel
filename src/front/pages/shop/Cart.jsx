@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Paper, Typography, IconButton, Stack, TextField, Divider, Button } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
+import FakePaymentModal from "../../components/FakePaymentModal";
 
 export const Cart = () => {
   const backend = import.meta.env.DEV ? "" : import.meta.env.VITE_BACKEND_URL;
   const token = localStorage.getItem("token");
   const [cart, setCart] = useState(null);
   const navigate = useNavigate();
+  const [showPayment, setShowPayment] = useState(false);
 
   const load = () => {
     if (!token) return;
@@ -33,25 +35,8 @@ export const Cart = () => {
     }).then(r => r.json()).then(setCart);
   };
 
-  const checkout = async () => {
-    const r = await fetch(`${backend}/api/checkout`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
-    const data = await r.json();
-    if (r.ok && data.checkout_url) {
-      try {
-        const url = new URL(data.checkout_url);
-        // Si es mismo origen → usar router (SPA). Si no, redirección completa.
-        if (url.origin === window.location.origin) {
-          navigate(url.pathname + url.search, { replace: true });
-        } else {
-          window.location.href = data.checkout_url;
-        }
-      } catch {
-        window.location.href = data.checkout_url;
-      }
-    } else {
-      alert(data.msg || JSON.stringify(data));
-      load();
-    }
+  const checkout = () => {
+    setShowPayment(true);
   };
 
   if (!token) return <div className="container">Inicia sesión.</div>;
@@ -87,6 +72,7 @@ export const Cart = () => {
           {cart.items.length > 0 && <Button variant="contained" color="secondary" onClick={checkout}>Checkout</Button>}
         </Stack>
       </Paper>
+      <FakePaymentModal open={showPayment} onClose={() => setShowPayment(false)} amount={total.toFixed(2)} />
     </div>
   );
 };

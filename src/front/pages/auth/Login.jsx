@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { motion } from "framer-motion"
 
 export const Login = () => {
     const [form, setForm] = useState({ email: "", password: "" })
@@ -36,14 +37,46 @@ export const Login = () => {
         setSubmitting(false)
     }
 
-    return <div className="container">
-        <h2>Login</h2>
-        <form onSubmit={submit} noValidate>
-            <input className={`form-control mb-2 ${errors.email ? 'is-invalid' : form.email ? 'is-valid' : ''}`} placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-            {errors.email && <div className="text-danger small">{errors.email}</div>}
-            <input className={`form-control mb-2 ${errors.password ? 'is-invalid' : form.password ? 'is-valid' : ''}`} type="password" placeholder="Password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
-            {errors.password && <div className="text-danger small">{errors.password}</div>}
-            <button className="btn btn-primary w-100" disabled={!canSubmit || submitting}>{submitting ? 'Enviando...' : 'Entrar'}</button>
-        </form>
-    </div>
+    return (
+        <div className="container">
+            <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+            >
+                <h2>Login</h2>
+                <form onSubmit={submit} noValidate>
+                    <motion.input
+                        className={`form-control mb-2 ${errors.email ? 'is-invalid' : form.email ? 'is-valid' : ''}`}
+                        placeholder="Email"
+                        value={form.email}
+                        onChange={e => setForm({ ...form, email: e.target.value })}
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                    />
+                    {errors.email && <div className="text-danger small">{errors.email}</div>}
+                    <motion.input
+                        className={`form-control mb-2 ${errors.password ? 'is-invalid' : form.password ? 'is-valid' : ''}`}
+                        type="password"
+                        placeholder="Password"
+                        value={form.password}
+                        onChange={e => setForm({ ...form, password: e.target.value })}
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                    />
+                    {errors.password && <div className="text-danger small">{errors.password}</div>}
+                    <motion.button
+                        className="btn btn-primary w-100"
+                        disabled={!canSubmit || submitting}
+                        whileTap={{ scale: 0.97 }}
+                        whileHover={{ scale: 1.03 }}
+                    >
+                        {submitting ? 'Enviando...' : 'Entrar'}
+                    </motion.button>
+                </form>
+            </motion.div>
+        </div>
+    )
 }
